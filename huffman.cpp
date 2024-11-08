@@ -104,9 +104,12 @@ class HuffmanCoding {
         root = nullptr;
         huffmanCodes.clear();
 
+        vector<pair<char, int>> freqVec(frequencies.begin(), frequencies.end());
+        sort(freqVec.begin(), freqVec.end());
+
         // Initialize the min-heap with nodes for each character and frequency
         MinHeap minHeap;
-        for (const auto& pair : frequencies) {
+        for (const auto& pair : freqVec) {
             minHeap.insert(new Node(pair.first, pair.second));
         }
 
