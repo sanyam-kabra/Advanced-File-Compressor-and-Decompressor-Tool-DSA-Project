@@ -6,6 +6,7 @@ import subprocess
 import os
 import sys
 import threading
+
 class CompressorGUI:
     def __init__(self):
         self.root = tk.Tk()
@@ -20,14 +21,11 @@ class CompressorGUI:
         self.setup_main_window()
         
     def setup_main_window(self):
-        # Clear any existing widgets
         for widget in self.root.winfo_children():
             widget.destroy()
             
-        # Main window styling
         self.root.configure(bg='#f0f0f0')
         
-        # Header
         header = tk.Label(
             self.root,
             text="What type of file do you want to compress/decompress?",
@@ -38,11 +36,9 @@ class CompressorGUI:
         )
         header.pack()
         
-        # Buttons frame
         button_frame = tk.Frame(self.root, bg='#f0f0f0')
         button_frame.pack(expand=True)
         
-        # Text button
         text_btn = ttk.Button(
             button_frame,
             text="Text File",
@@ -51,7 +47,6 @@ class CompressorGUI:
         )
         text_btn.pack(pady=10)
         
-        # JPEG button
         jpeg_btn = ttk.Button(
             button_frame,
             text="JPEG File",
@@ -59,13 +54,115 @@ class CompressorGUI:
             width=20
         )
         jpeg_btn.pack(pady=10)
+
+    def show_success_window(self, output_text):
+        for widget in self.root.winfo_children():
+            widget.destroy()
+            
+        # Main success message
+        success_label = tk.Label(
+            self.root,
+            text="Operation Completed Successfully!",
+            font=("Arial", 12, "bold"),
+            bg='#f0f0f0',
+            pady=10
+        )
+        success_label.pack()
         
+        # Display the complete output in a text widget
+        output_text_widget = tk.Text(
+            self.root,
+            height=10,
+            width=40,
+            wrap=tk.WORD
+        )
+        output_text_widget.pack(pady=10, padx=20)
+        output_text_widget.insert(tk.END, output_text)
+        output_text_widget.config(state='disabled')
+        
+        # Home button
+        home_btn = ttk.Button(
+            self.root,
+            text="Back to Home",
+            command=self.setup_main_window
+        )
+        home_btn.pack(pady=10)
+
+    def process_text(self, operation, input_path, output_path):
+        if not input_path or not output_path:
+            messagebox.showerror("Error", "Please select both input and output files")
+            return
+            
+        try:
+            args = [
+                os.path.join(self.application_path, "compressor.exe"),
+                "text",
+                operation,
+                input_path,
+                output_path
+            ]
+            
+            output = self.run_compressor(args)
+            self.show_success_window(output)
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+    def process_jpeg(self, input_path, output_path, quality):
+        if not input_path or not output_path:
+            messagebox.showerror("Error", "Please select both input and output files")
+            return
+
+        try:
+            quality = int(quality)
+            if quality < 1 or quality > 100:
+                messagebox.showerror("Error", "Quality must be between 1 and 100")
+                return
+
+            def run_jpeg_compression():
+                try:
+                    args = [
+                        os.path.join(self.application_path, "compressor.exe"),
+                        "jpeg",
+                        "compress",
+                        input_path,
+                        output_path,
+                        str(quality)
+                    ]
+                    output = self.run_compressor(args)
+                    self.root.after(0, lambda: self.show_success_window(output))
+                except Exception as e:
+                    self.root.after(0, lambda: messagebox.showerror("Error", f"An error occurred: {str(e)}"))
+
+            threading.Thread(target=run_jpeg_compression).start()
+        except ValueError:
+            messagebox.showerror("Error", "Invalid quality value")
+
+    def run_compressor(self, args):
+        compressor_path = os.path.join(self.application_path, "compressor.exe")
+        if not os.path.exists(compressor_path):
+            raise FileNotFoundError(f"Compressor executable not found at: {compressor_path}")
+
+        try:
+            process = subprocess.Popen(
+                args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            stdout, stderr = process.communicate()
+
+            if process.returncode != 0:
+                raise RuntimeError(f"Compression failed: {stderr}")
+
+            return stdout
+        except Exception as e:
+            raise Exception(f"Error running compressor: {str(e)}")
+
     def show_text_window(self):
-        # Clear current window
         for widget in self.root.winfo_children():
             widget.destroy()
 
-        # Header
         header = tk.Label(
             self.root,
             text="Text File Compression/Decompression",
@@ -75,7 +172,6 @@ class CompressorGUI:
         )
         header.pack()
 
-        # Operation selection
         op_frame = tk.Frame(self.root, bg='#f0f0f0')
         op_frame.pack(fill='x', padx=20)
 
@@ -97,7 +193,6 @@ class CompressorGUI:
         )
         decompress_radio.pack(side='left', padx=20)
 
-        # Input file selection
         input_frame = tk.Frame(self.root, bg='#f0f0f0')
         input_frame.pack(fill='x', padx=20, pady=10)
 
@@ -112,7 +207,6 @@ class CompressorGUI:
         )
         input_btn.pack(side='left', padx=5)
 
-        # Output file selection
         output_frame = tk.Frame(self.root, bg='#f0f0f0')
         output_frame.pack(fill='x', padx=20, pady=10)
 
@@ -127,7 +221,6 @@ class CompressorGUI:
         )
         output_btn.pack(side='left', padx=5)
 
-        # Process button
         process_btn = ttk.Button(
             self.root,
             text="Start Process",
@@ -135,20 +228,17 @@ class CompressorGUI:
         )
         process_btn.pack(pady=20)
 
-        # Home button
         home_btn = ttk.Button(
             self.root,
             text="Back to Home",
             command=self.setup_main_window
         )
         home_btn.pack(pady=10)
-        
+
     def show_jpeg_window(self):
-        # Clear current window
         for widget in self.root.winfo_children():
             widget.destroy()
             
-        # Header
         header = tk.Label(
             self.root,
             text="JPEG File Compression",
@@ -158,7 +248,6 @@ class CompressorGUI:
         )
         header.pack()
         
-        # Input file selection
         input_frame = tk.Frame(self.root, bg='#f0f0f0')
         input_frame.pack(fill='x', padx=20, pady=10)
         
@@ -173,7 +262,6 @@ class CompressorGUI:
         )
         input_btn.pack(side='left', padx=5)
         
-        # Output file selection
         output_frame = tk.Frame(self.root, bg='#f0f0f0')
         output_frame.pack(fill='x', padx=20, pady=10)
         
@@ -188,7 +276,6 @@ class CompressorGUI:
         )
         output_btn.pack(side='left', padx=5)
         
-        # Quality selection
         quality_frame = tk.Frame(self.root, bg='#f0f0f0')
         quality_frame.pack(fill='x', padx=20, pady=10)
         
@@ -203,7 +290,6 @@ class CompressorGUI:
         quality_entry = ttk.Entry(quality_frame, textvariable=quality_var, width=5)
         quality_entry.pack(side='left', padx=5)
         
-        # Process button
         process_btn = ttk.Button(
             self.root,
             text="Start Compression",
@@ -211,109 +297,13 @@ class CompressorGUI:
         )
         process_btn.pack(pady=20)
         
-        # Home button
         home_btn = ttk.Button(
             self.root,
             text="Back to Home",
             command=self.setup_main_window
         )
         home_btn.pack(pady=10)
-        
-    def show_success_window(self, message):
-        # Clear current window
-        for widget in self.root.winfo_children():
-            widget.destroy()
-            
-        # Success message
-        success_label = tk.Label(
-            self.root,
-            text=message,
-            font=("Arial", 12, "bold"),
-            bg='#f0f0f0',
-            pady=40
-        )
-        success_label.pack(expand=True)
-        
-        # Home button
-        home_btn = ttk.Button(
-            self.root,
-            text="Back to Home",
-            command=self.setup_main_window
-        )
-        home_btn.pack(pady=20)
 
-    def process_text(self, operation, input_path, output_path):
-        if not input_path or not output_path:
-            messagebox.showerror("Error", "Please select both input and output files")
-            return
-            
-        try:
-            # Prepare arguments for the C++ executable
-            args = [
-                os.path.join(self.application_path, "compressor.exe"),
-                "text",
-                operation,
-                input_path,
-                output_path
-            ]
-            
-            # Run the compressor
-            self.run_compressor(args)
-            
-            # Show success message
-            if operation == "compress":
-                self.show_success_window("Text file compression completed successfully!")
-            else:
-                self.show_success_window("Text file decompression completed successfully!")
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {str(e)}")
-
-    def process_jpeg(self, input_path, output_path, quality):
-        if not input_path or not output_path:
-            messagebox.showerror("Error", "Please select both input and output files")
-            return
-
-        quality = int(quality)
-        if quality < 1 or quality > 100:
-            messagebox.showerror("Error", "Quality must be between 1 and 100")
-            return
-
-        def run_jpeg_compression():
-            try:
-                args = [
-                    os.path.join(self.application_path, "compressor.exe"),
-                    "jpeg",
-                    "compress",
-                    input_path,
-                    output_path,
-                    str(quality)
-                ]
-                stdout = self.run_compressor(args)
-                self.show_success_window(stdout.strip())
-            except Exception as e:
-                messagebox.showerror("Error", f"An error occurred: {str(e)}")
-
-        threading.Thread(target=run_jpeg_compression).start()
-    def run_compressor(self, args):
-        compressor_path = os.path.join(self.application_path, "compressor.exe")
-        if not os.path.exists(compressor_path):
-            raise FileNotFoundError(f"Compressor executable not found at: {compressor_path}")
-
-        try:
-            process = subprocess.Popen(
-                args,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            stdout, stderr = process.communicate()
-
-            if process.returncode != 0:
-                raise RuntimeError(f"Compression failed: {stderr}")
-
-            return stdout
-        except Exception as e:
-            raise Exception(f"Error running compressor: {str(e)}")
     def run(self):
         self.root.mainloop()
 
