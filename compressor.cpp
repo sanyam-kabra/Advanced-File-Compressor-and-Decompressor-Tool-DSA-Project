@@ -90,6 +90,27 @@ public:
     }
 };
 
+//Function to calculate file size
+long getFileSize(const std::string& filename) {
+    std::ifstream file(filename, std::ios::binary);
+    
+    if (!file) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return -1;
+    }
+    
+    // Move the file pointer to the end
+    file.seekg(0, std::ios::end);
+    
+    // Get the position of the file pointer (which is the file size)
+    long size = file.tellg();
+    
+    // Close the file
+    file.close();
+    
+    return size;
+}
+
 // Main class for Huffman Coding operations: encoding and decoding files
 class HuffmanCoding {
     Node* root;                              // Root node of the Huffman Tree
@@ -276,7 +297,7 @@ public:
     ~HuffmanCoding() {
         deleteTree(root);
     }
-
+    
     // Encodes input file text and saves encoded output to a file
     void encodeToFile(const string& inputFile, const string& encodedFile) {
         ifstream inFile(inputFile);
@@ -293,6 +314,13 @@ public:
         saveEncodedToFile(encodedStr, encodedFile);
         
         cout << "File successfully compressed" << endl;
+        long inputsize = getFileSize(inputFile);
+        long outputsize = getFileSize(encodedFile);
+        cout<<"original file size:"<<inputsize<<" bytes"<<endl;
+        cout<<"compressed file size:"<<outputsize<<" bytes"<<endl;
+        double compressionPercentage = (static_cast<double>(outputsize) / inputsize) * 100;
+        cout << "Compression Percentage: " << compressionPercentage << "%" << endl;
+
     }
 
     // Decodes the encoded file back into its original text and saves it to a file
@@ -403,6 +431,7 @@ int main(int argc, char* argv[]) {
             HuffmanCoding huffman;
             huffman.encodeToFile(inputFile, outputFile);
             cout << "Text file compression completed successfully!" << endl;
+
         } else if (operation == "decompress") {
             HuffmanCoding huffman;
             huffman.decodeFromFile(inputFile, outputFile);
@@ -413,15 +442,16 @@ int main(int argc, char* argv[]) {
         }
     } else if (fileType == "jpeg") {
         string quality = argv[5];
-        // if (argc !=5) {
-        //     cerr << "Usage: compressor.exe jpeg <input_file> <output_file> <quality>" << endl;
-        //     return 1;
-        // }
-
-        
+               
         JPEGCompressor jpegCompressor(inputFile, outputFile, stoi(quality));
         jpegCompressor.compress();
         cout << "JPEG compression completed successfully!" << endl;
+        long inputsize = getFileSize(inputFile);
+        long outputsize = getFileSize(outputFile);
+        cout<<"original file size:"<<inputsize<<" bytes"<<endl;
+        cout<<"compressed file size:"<<outputsize<<" bytes"<<endl;
+        double compressionPercentage = (static_cast<double>(outputsize) / inputsize) * 100;
+        cout << "Compression Percentage: " << compressionPercentage << "%" << endl;
     } else {
         cerr << "Invalid file type. Use 'text' or 'jpeg'." << endl;
         return 1;
