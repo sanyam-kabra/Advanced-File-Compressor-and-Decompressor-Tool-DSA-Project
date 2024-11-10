@@ -149,9 +149,3 @@ A versatile file compression tool with a graphical user interface that supports 
    - Verify input file format
    - Ensure sufficient disk space
    - Check error messages in terminal
-
-## Contributing
-Feel free to submit issues and enhancement requests!
-
-## License
-This project is open source and available under the MIT License.
